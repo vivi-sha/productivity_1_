@@ -58,7 +58,7 @@
 
 <div id="notesContainer"></div>
 
-<script>
+<script nonce="<%= cspNonce %>">
     function showNotes() {
         let notes = JSON.parse(localStorage.getItem("notes") || "[]");
         let container = document.getElementById("notesContainer");

@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 import helmet from "helmet";
+import crypto from "crypto";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
@@ -20,7 +21,34 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.disable("x-powered-by");
 
-app.use(helmet());
+// Disable helmet's built-in CSP so we can provide a nonce-based CSP per request
+app.use(helmet({ contentSecurityPolicy: false }));
+// Per-request CSP nonce + header. This allows us to keep a strict CSP while
+// permitting necessary inline scripts by adding a nonce attribute to them.
+app.use((req, res, next) => {
+  try {
+    const nonce = crypto.randomBytes(16).toString("base64");
+    // expose to EJS templates as `cspNonce`
+    res.locals.cspNonce = nonce;
+
+    const directives = [
+      "default-src 'self'",
+      // allow scripts from self, CDN, and inline scripts carrying the nonce
+      `script-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net`,
+      // styles: allow self, CDN and allow inline styles for small in-template styles
+      "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+      "img-src 'self' data:",
+      "connect-src 'self' https://cdn.jsdelivr.net",
+      "font-src 'self' https://fonts.gstatic.com",
+    ];
+
+    res.setHeader('Content-Security-Policy', directives.join('; '));
+  } catch (e) {
+    // if nonce generation fails, continue without setting CSP (safer to fail open here)
+    console.error('CSP nonce generation failed', e);
+  }
+  next();
+});
 app.use(compression());
 // app.use(mongoSanitize());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300 }));

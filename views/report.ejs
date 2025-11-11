@@ -41,7 +41,7 @@
     <footer>Updated: <span id="date"></span> • © 2025 Productivity Tracker</footer>
   </div>
 
-  <script>
+  <script nonce="<%= cspNonce %>">
     document.getElementById("date").textContent = new Date().toLocaleDateString();
 
     new Chart(document.getElementById('weeklyChart'), {
