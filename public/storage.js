@@ -1,3 +1,14 @@
+/*FIRST — What is this file?
+
+This file contains frontend functions that:
+
+Talk to your backend (/api/tasks/...)
+Send data (POST/PUT)
+Get data (GET)
+Delete data (DELETE)
+These functions are used by your React/JS UI.*/
+
+
 const API_BASE = "";
 
 export async function loadTasksFromBackend(weekKey) {
@@ -37,3 +48,10 @@ export async function updateTaskOnBackend(weekKey, dayIndex, taskId, text, statu
 export async function clearWeekOnBackend(weekKey) {
   await fetch(`${API_BASE}/api/tasks/${weekKey}`, { method: "DELETE" });
 }
+
+/*"Content-Type": "application/json"
+= Telling backend “This request body contains JSON”.
+
+It triggers express.json() to parse JSON into a real JS object.
+
+Without it, backend cannot read your data.*/

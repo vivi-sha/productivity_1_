@@ -60,6 +60,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+// connect to db 
 const MONGODB_URI = process.env.MONGODB_URI || "";
 if (!MONGODB_URI) {
   console.warn("⚠️  MONGODB_URI is not set. Set it in .env");
@@ -77,6 +78,8 @@ app.get("/api/tasks/:weekKey", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+//first updation of day task inside particular weekkey
+
 app.post("/api/tasks/:weekKey", async (req, res, next) => {
   try {
     const { weekKey } = req.params;
@@ -85,10 +88,10 @@ app.post("/api/tasks/:weekKey", async (req, res, next) => {
       return res.status(400).json({ error: "Invalid payload: 'days' must be an object" });
     }
     const updated = await Week.findOneAndUpdate(
-      { weekKey },
-      { days, updatedAt: new Date() },
-      { upsert: true, new: true }
-    ).lean();
+      { weekKey },//filter
+      { days, updatedAt: new Date() },//If it exists — update it.
+      { upsert: true, new: true }//If it doesn’t — create it, new i updated doc is returned
+     ).lean();//Then give me the updated result as plain JSON.
     res.json({ success: true, weekKey, days: updated.days });
   } catch (e) { next(e); }
 });
@@ -97,13 +100,14 @@ app.delete("/api/tasks/:weekKey/:dayIndex/:taskId", async (req, res, next) => {
   try {
     const { weekKey, dayIndex, taskId } = req.params;
     const doc = await Week.findOne({ weekKey });
-    
+    //check if doc exists and dayIndex exists
     if (!doc || !doc.days[dayIndex]) {
       return res.status(404).json({ error: "Week or day not found" });
     }
-
+ //filters all tasks and separates all tasks from the to be deleted one
     doc.days[dayIndex] = doc.days[dayIndex].filter(t => t.id !== taskId);
   // markModified so Mongoose knows to persist changes to the mixed 'days' field
+  //doc i mongoose document, markModified is mongoose method we are checking if that method exists
   if (typeof doc.markModified === 'function') doc.markModified('days');
   await doc.save();
 

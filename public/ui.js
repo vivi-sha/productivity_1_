@@ -80,7 +80,7 @@ export function updateWeekUI(tasksForWeek, weekKey) {
   attachAddTaskListeners();
 }
 
-// Create task card element with delete and edit buttons
+// Create task card element with delete and edit buttons. This function creates ONE task box/card in the UI.
 export function createTaskCard(
   text = "",
   status = "default",
@@ -139,7 +139,7 @@ export function createTaskCard(
         "in-process",
         "default"
       );
-      taskCard.classList.add(newStatus);
+      taskCard.classList.add(newStatus);// remove color and then add new color
     });
 
     label.appendChild(radio);
