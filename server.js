@@ -12,6 +12,9 @@ import mongoSanitize from "express-mongo-sanitize";
 import xss from "xss-clean";
 
 import Week from "./models/Week.js";
+import User from "./models/User.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -35,11 +38,11 @@ app.use((req, res, next) => {
       "default-src 'self'",
       // allow scripts from self, CDN, and inline scripts carrying the nonce
       `script-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net`,
-      // styles: allow self, CDN and allow inline styles for small in-template styles
-      "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+      // styles: allow self, CDN, Google Fonts and allow inline styles for small in-template styles
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
       "img-src 'self' data:",
       "connect-src 'self' https://cdn.jsdelivr.net",
-      "font-src 'self' https://fonts.gstatic.com",
+      "font-src 'self'",
     ];
 
     res.setHeader('Content-Security-Policy', directives.join('; '));
@@ -168,9 +171,54 @@ app.get("/", async (req, res) => {
 });
 app.get("/weekly", (req, res) => res.render("weekly"));
 app.get("/login", (req, res) => res.render("login"));
+app.get("/signup", (req, res) => res.render("signup"));
 app.get("/report", (req, res) => res.render("report"));
 app.get("/notes", (req, res) => res.render("notes"));
 app.get("/pomodoro", (req, res) => res.render("pomodoro"));
+
+// Auth endpoints: POST /signup and POST /login
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-this";
+
+// Signup: create user and return token
+app.post('/signup', async (req, res, next) => {
+  try {
+    const { email, username, password } = req.body || {};
+    if (!email || !username || !password) return res.status(400).json({ success: false, message: 'Missing fields' });
+
+    // password policy: 6+ chars, at least one letter and one number
+    const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+    if (!passwordPattern.test(password)) {
+      return res.status(400).json({ success: false, message: 'Password does not meet requirements' });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(409).json({ success: false, message: 'Email already registered' });
+
+    const user = new User({ email, username });
+    await user.setPassword(password);
+    await user.save();
+
+    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ success: true, token, username: user.username, email: user.email });
+  } catch (e) { next(e); }
+});
+
+// Login: validate and return token
+app.post('/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) return res.status(400).json({ success: false, message: 'Missing fields' });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+
+    const ok = await user.validatePassword(password);
+    if (!ok) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+
+    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ success: true, token, username: user.username, email: user.email });
+  } catch (e) { next(e); }
+});
 
 // Error handler
 app.use((err, req, res, next) => {

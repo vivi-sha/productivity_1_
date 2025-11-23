@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up | Productivity Tracker</title>
+
+  <!-- Poppins font (self-hosted) -->
+  <link href="/styles/poppins.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: linear-gradient(180deg, #000814, #001d3d, #003566);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .signup-box {
+      background: #ffffff;
+      width: 380px;
+      border-radius: 12px;
+      padding: 40px 35px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .signup-box h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #001d3d;
+      font-weight: 700;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      color: #000814;
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #001d3d;
+      border-radius: 8px;
+      background: #f8f9fa;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .password-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-container span {
+      position: absolute;
+      right: 15px;
+      color: #001d3d;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      background: #001d3d;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      background: #000814;
+    }
+
+    .login-text {
+      text-align: center;
+      margin-top: 20px;
+      color: #001d3d;
+    }
+
+    .login-text a {
+      color: #001d3d;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .login-text a:hover {
+      text-decoration: underline;
+    }
+
+    .feedback {
+      font-size: 12px;
+      margin-top: 3px;
+      color: red;
+      display: none;
+    }
+
+    .feedback.show {
+      display: block;
+    }
+
+    .input.is-invalid {
+      border-color: #dc3545 !important;
+    }
+
+    .input.is-valid {
+      border-color: #28a745 !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="signup-container">
+    <div class="signup-box">
+      <h2>Sign up</h2>
+      <form id="signupForm">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username" required>
+
+        <label for="password">Password</label>
+        <div class="password-container">
+          <input type="password" id="password" name="password" placeholder="Enter your password" required class="input">
+          <span id="togglePassword">Show</span>
+        </div>
+        <div class="feedback" id="passwordFeedback">Password must be 6+ characters with letters and numbers</div>
+
+        <button type="submit" id="submitBtn">Sign Up</button>
+      </form>
+
+      <p class="login-text">Already have an account? <a href="/login">Login</a></p>
+    </div>
+  </div>
+
+  <script nonce="<%= cspNonce %>">
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    const passwordFeedback = document.getElementById('passwordFeedback');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Password validation: 6+ chars, at least 1 letter, at least 1 number
+    const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+
+    togglePassword.addEventListener('click', () => {
+      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+      password.setAttribute('type', type);
+      togglePassword.textContent = type === 'password' ? 'Show' : 'Hide';
+    });
+
+    // Real-time password validation
+    password.addEventListener('input', () => {
+      if (passwordPattern.test(password.value)) {
+        password.classList.add('is-valid');
+        password.classList.remove('is-invalid');
+        passwordFeedback.classList.remove('show');
+        submitBtn.disabled = false;
+      } else {
+        password.classList.add('is-invalid');
+        password.classList.remove('is-valid');
+        passwordFeedback.classList.add('show');
+        submitBtn.disabled = true;
+      }
+    });
+
+    document.querySelector("#signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const passwordVal = document.getElementById("password").value.trim();
+
+      // Client-side validation
+      if (!passwordPattern.test(passwordVal)) {
+        alert('Password must be 6+ characters with letters and numbers');
+        return;
+      }
+
+      try {
+        // Use a relative URL so the same origin (port) is used for requests
+        const response = await fetch("/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, username, password: passwordVal }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          // Auto-login after signup: store token, username, and email
+          if (data.token) localStorage.setItem('authToken', data.token);
+          localStorage.setItem('username', data.username || username);
+          localStorage.setItem('userEmail', email);
+          // Redirect immediately without showing an alert
+          window.location.href = '/';
+        } else {
+          alert(data.message || 'Signup failed');
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Something went wrong! Please try again later.");
+      }
+    });
+  </script>
+</body>
+</html>

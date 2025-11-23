@@ -1,25 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-     
-<link rel="stylesheet" href="index.css">
-</head>
-<body>
-  <div class="maincontainer"> <div class="logo">logo</div>
+  <style nonce="<%= cspNonce %>">
+    /* General reset */
+    body { margin:0; padding:0; }
+    .maincontainer{ position: fixed; height: 100vh; background-color: #000000; width: 300px; display: grid; grid-template-rows: auto 1fr; }
+    .container{ display: grid; grid-template-rows: repeat(5, auto); gap: 5px; background-color: black; justify-items: center; align-content: center; }
 
-  <div class ='container'>
+    .btn{ margin-left:20px; padding: 10px; background-color: #000000; color: white; border: none; cursor: pointer; width: 250px; height: 50px; border: solid white 2px; border-radius: 5px; transition: transform 0.2s; }
+    .sb:hover{ background-color: rgb(64, 61, 61); color:white; border: solid white 2px; width: 245px; height: 45px; }
+
+      .logo{ display:block; margin-top:15px; margin-left: 10px; font-weight:800; font-size:26px; color: #fff; padding: 14px 12px; width: 220px; }
+
+    .login{ display:flex; align-items:center; justify-content: flex-end; background-image: radial-gradient(circle at center, #1e047e, #000000); padding: 0 20px; height:56px; }
+
+    .sign{ text-align: center; padding: 10px; background-color: #000000; color: white; border: none; cursor: pointer; width: 100px; height: 45px; border: solid white 2px; border-radius: 50px; }
+    .sign:hover{ background-color: rgb(64, 61, 61); color:white; border: solid white 2px; width: 95px; height: 40px; }
+
+    .content-section { margin-left: 300px; padding: 100px; background-color: #111; color: white; height: auto; }
+
+    /* site-nav styles to match sidebar buttons */
+    .site-nav { padding-left:0; height:100%; display:flex; }
+    .nav-list { list-style:none; padding: 12px 0; margin: auto; display:flex; flex-direction:column; gap:12px; align-items:center; }
+    .nav-link {
+      display:inline-block;
+      width: 250px;
+      text-align:center;
+      padding: 12px 8px;
+      color: #fff;
+      text-decoration: none;
+      border: 2px solid #fff;
+      border-radius: 5px;
+      background: transparent;
+      box-sizing: border-box;
+    }
+    .nav-link:hover { background: rgb(64,61,61); }
+    .nav-link:visited { color: #fff; }
+    /* Active link style: only the currently visible section */
+    .nav-link.active { background: #fff; color: #000; }
+
+    /* smooth scroll for the whole document */
+    html { scroll-behavior: smooth; }
+
+    /* auth button pill */
+    .auth-btn, .auth-btn:visited { border-radius:22px; padding:8px 14px; display:inline-flex; background:#0b0b0b; color:#fff; text-decoration:none; border:2px solid #fff; box-sizing: border-box; min-height:36px; line-height:18px; align-items:center; justify-content:center; white-space:nowrap; }
+    .auth-btn:hover { opacity:0.95; }
+
+    /* ensure sidebar hides on small screens */
+    @media (max-width:800px) { .maincontainer { display:none; } .content-section { margin-left: 0; } }
+  </style>
+
+  <!-- Left sidebar markup matching your provided structure -->
+  <div class="maincontainer">
+    <div class="logo" >FocusPanel</div>
+
+    <nav class="site-nav" aria-label="Primary navigation">
+        <ul class="nav-list">
+          <li class="nav-item"><a href="#home" class="nav-link">Home</a></li>
+          <li class="nav-item"><a href="#guide" class="nav-link">Guide</a></li>
+          <li class="nav-item"><a href="#midbuttons" class="nav-link">Focus Panel</a></li>
+          <li class="nav-item"><a href="#todo" class="nav-link">To‑Do List</a></li>
+          <li class="nav-item"><a href="#features" class="nav-link">Features</a></li>
+        </ul>
+    </nav>
+
+    <!-- Auth Buttons Container (kept for potential left-side use) -->
+    <div class="auth-container" id="authActions" style="display:none;"></div>
+  </div>
+
+  <!-- Top bar (right area) with login/signup/logout placed at top-right -->
+  <div class="login" style="margin-left:300px;">
+    <div style="flex:1"></div>
+    <div id="topAuth" style="padding-right:18px;">
+      <div id="authActionsTop" style="display:inline-block;"></div>
+    </div>
+  </div>
+
+  <script nonce="<%= cspNonce %>">
+    // Populate auth buttons in the top-right pill; keep storage-based behavior.
+    (function () {
+      const topContainer = document.getElementById('authActionsTop');
+      if (!topContainer) return;
+
+      function render() {
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('username') || '';
+        topContainer.innerHTML = '';
+        if (token) {
+          const btn = document.createElement('button');
+          btn.className = 'auth-btn';
+          btn.textContent = 'Logout';
+          btn.addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('username');
+            localStorage.removeItem('userEmail');
+            window.location.href = '/';
+          });
+          topContainer.appendChild(btn);
+        } else {
+          const su = document.createElement('a'); su.href = '/signup'; su.className = 'auth-btn'; su.textContent = 'Sign up';
+          const li = document.createElement('a'); li.href = '/login'; li.className = 'auth-btn'; li.textContent = 'Login'; li.style.marginLeft = '8px';
+          topContainer.appendChild(su); topContainer.appendChild(li);
+        }
+      }
+
+      render();
+      window.addEventListener('storage', render);
+    })();
     
-<button type="button" class="btn sb btn-dark">Home</button>
-  <button type="button" class="btn sb btn-dark">Guide ></button>
-  <button type="button" class="btn sb btn-dark">Focus Panel</button>
-  <button type="button" class="btn sb btn-dark">To-Do List</button>
-  <button type="button" class="btn sb btn-dark">Features</button>
-</div>
- </div>
- 
+    // Highlight nav links based on scroll position using IntersectionObserver
+    (function () {
+      const sections = [ 'home', 'guide', 'midbuttons', 'todo', 'features' ].map(id => document.getElementById(id)).filter(Boolean);
+      const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+      if (!sections.length || !navLinks.length) return;
 
-</body>
-</html>
+      const idToLink = {};
+      navLinks.forEach(a => { const href = a.getAttribute('href') || ''; if (href.startsWith('#')) idToLink[href.slice(1)] = a; });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const id = entry.target.id;
+          const link = idToLink[id];
+          if (!link) return;
+          if (entry.isIntersecting) {
+            // remove active from others
+            navLinks.forEach(n => n.classList.remove('active'));
+            link.classList.add('active');
+          }
+        });
+      }, { root: null, rootMargin: '-40% 0px -40% 0px', threshold: 0 });
+
+      sections.forEach(s => observer.observe(s));
+
+      // Also set active on click immediately
+      navLinks.forEach(a => a.addEventListener('click', (e) => {
+        navLinks.forEach(n => n.classList.remove('active'));
+        a.classList.add('active');
+      }));
+    })();
+  </script>
